@@ -486,7 +486,8 @@ function renderMasthead() {
           <i data-lucide="${S.menuOpen ? "x" : "menu"}"></i>
         </button>
         <button class="brand" data-goto="home">
-          <img class="brand-logo" src="/bashline-logo.png" alt="${esc(S.settings.brandName)}">
+          <span class="brand-wordmark">${esc(S.settings.brandName)}</span>
+          <span class="brand-subtitle">News Network</span>
           <span class="brand-tagline">${esc(S.settings.tagline)}</span>
         </button>
         <div class="masthead-actions">

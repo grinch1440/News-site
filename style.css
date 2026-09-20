@@ -193,12 +193,27 @@ input:focus, textarea:focus, select:focus {
   font-size: 2rem;
   letter-spacing: 0.02em;
 }
-.brand-logo {
-  height: 90px;
-  width: auto;
-  display: block;
+.brand-wordmark {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 3rem;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--signal);
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 var(--ink);
 }
-@media (min-width: 640px) { .brand-logo { height: 110px; } }
+@media (min-width: 640px) { .brand-wordmark { font-size: 3.75rem; } }
+.brand-subtitle {
+  display: block;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-top: 0.1rem;
+}
 .brand-tagline {
   font-family: var(--font-mono);
   font-size: 0.65rem;
