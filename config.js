@@ -1,0 +1,2 @@
+const SUPABASE_URL = "https://xtjklkewypmgtnjzxnqw.supabase.co";       // e.g. "https://abcdefgh.supabase.co"
+const SUPABASE_ANON_KEY = "sb_publishable_Jbq6Ix2C9YdiwNA4yP_uRw_mO6-MKND";  // the long "anon public" key

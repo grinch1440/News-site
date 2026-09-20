@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BNN — Newsroom Dashboard</title>
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+  (function () {
+    function showFatal(msg) {
+      var app = document.getElementById("app");
+      if (app && app.getAttribute("data-vantage-loaded") !== "1") {
+        app.innerHTML = '<div style="padding:1.5rem;font-family:monospace;font-size:0.85rem;line-height:1.6;color:#C1272D;background:#F7F4EC;min-height:100vh;box-sizing:border-box;">' +
+          '<strong>The page hit an error while loading:</strong><br><br>' +
+          String(msg).replace(/</g, "&lt;") +
+          '<br><br><span style="color:#5B6472;">Take a screenshot of this message and send it over.</span></div>';
+      }
+    }
+    window.addEventListener("error", function (e) {
+      showFatal((e && e.message ? e.message : "Unknown error") + (e && e.filename ? " — " + e.filename.split("/").pop() + ":" + e.lineno : ""));
+    });
+    window.addEventListener("unhandledrejection", function (e) {
+      var reason = e && e.reason ? (e.reason.message || e.reason) : "Unknown rejection";
+      showFatal("Unhandled error: " + reason);
+    });
+  })();
+</script>
+
+<script>window.VANTAGE_ADMIN_ENTRY = true;</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.7.0/mammoth.browser.min.js"></script>
+<script src="data.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
