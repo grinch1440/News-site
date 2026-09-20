@@ -1210,6 +1210,7 @@ function renderAdminSettings() {
       <div class="field"><label>Current passcode</label><input type="password" name="currentPasscode" placeholder="Only needed to change the passcode"></div>
       <div class="field"><label>New passcode</label><input type="password" name="newPasscode" placeholder="Leave blank to keep current"></div>
       <div id="passcode-error" class="error-text hidden">That current passcode isn't correct — nothing was changed.</div>
+      <div id="settings-error" class="error-text hidden">Couldn't save — check your connection and try again.</div>
       <button type="submit" class="btn-primary">Save settings</button>
       <div id="settings-saved" class="saved-msg hidden"><i data-lucide="check"></i> Saved</div>
     </form>`;
@@ -1609,12 +1610,17 @@ document.addEventListener("submit", async function (e) {
       S.admin.passcode = newPasscode;
     }
 
-    await updateSettingsRow(next);
-    S.settings = next;
+    const settingsSaved = await updateSettingsRow(next);
     const saved = document.getElementById("settings-saved");
-    if (saved) {
-      saved.classList.remove("hidden");
+    const settingsErr = document.getElementById("settings-error");
+    if (settingsSaved) {
+      S.settings = next;
+      if (saved) saved.classList.remove("hidden");
+      if (settingsErr) settingsErr.classList.add("hidden");
       setTimeout(() => saved.classList.add("hidden"), 2000);
+    } else {
+      if (settingsErr) settingsErr.classList.remove("hidden");
+      if (saved) saved.classList.add("hidden");
     }
     return;
   }
