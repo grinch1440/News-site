@@ -193,6 +193,12 @@ input:focus, textarea:focus, select:focus {
   font-size: 2rem;
   letter-spacing: 0.02em;
 }
+.brand-logo {
+  height: 90px;
+  width: auto;
+  display: block;
+}
+@media (min-width: 640px) { .brand-logo { height: 110px; } }
 .brand-tagline {
   font-family: var(--font-mono);
   font-size: 0.65rem;
