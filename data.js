@@ -1,5 +1,5 @@
-const BRAND = "BNN";
-const TAGLINE = "Bash News Network";
+const BRAND = "Bashline";
+const TAGLINE = "Independent reporting. A wider view.";
 const DEFAULT_PASSCODE = "editor2026";
 
 const CATEGORIES = [
