@@ -36,7 +36,7 @@ if (CONFIGURED) {
 function rowToArticle(r) {
   const gallery = (r.images && r.images.length) ? r.images : (r.image ? [r.image] : []);
   return {
-    id: r.id, title: r.title, dek: r.dek || "", category: r.category, author: r.author,
+    id: r.id, slug: r.slug || r.id, title: r.title, dek: r.dek || "", category: r.category, author: r.author,
     dateline: r.dateline, date: r.published_at, image: r.image, images: gallery, video: r.video || "",
     breaking: !!r.breaking, trending: !!r.trending, featured: !!r.featured,
     breakingUntil: r.breaking_until || null, trendingUntil: r.trending_until || null,
@@ -66,8 +66,8 @@ async function insertArticle(a) {
     p_type: a.type, p_body: a.body,
     p_breaking_until: a.breakingUntil || null, p_trending_until: a.trendingUntil || null,
   });
-  if (error) { console.error("insertArticle", error); return false; }
-  return data === true;
+  if (error) { console.error("insertArticle", error); return null; }
+  return data || null; // the generated slug, or null if the passcode check failed
 }
 
 async function updateArticleRow(id, a) {
@@ -193,32 +193,34 @@ async function init() {
   S.articles = articles;
   S.settings = settings;
   S.dark = localGet("vantage-dark-mode") === "true";
-  S.page = window.VANTAGE_ADMIN_ENTRY ? { name: "admin" } : hashToPage(window.location.hash);
-  history.replaceState({ vantagePage: S.page }, "", pageToHash(S.page));
+  S.page = window.VANTAGE_ADMIN_ENTRY ? { name: "admin" } : pathToPage(window.location.pathname);
+  history.replaceState({ vantagePage: S.page }, "", pageToPath(S.page));
   S.ready = true;
   render();
-  if (S.page.name === "article" && S.page.id && !S.comments[S.page.id]) {
-    loadCommentsFor(S.page.id);
+  if (S.page.name === "article" && S.page.slug) {
+    const found = S.articles.find(a => a.slug === S.page.slug);
+    if (found && !S.comments[found.id]) loadCommentsFor(found.id);
   }
 }
 
-function pageToHash(page) {
-  if (page.name === "category") return "#/category/" + encodeURIComponent(page.category || "");
-  if (page.name === "article") return "#/article/" + encodeURIComponent(page.id || "");
-  if (page.name === "opinion") return "#/opinion";
-  if (page.name === "about") return "#/about";
-  if (page.name === "privacy") return "#/privacy";
-  if (page.name === "contact") return "#/contact";
-  if (page.name === "admin") return "#/admin";
-  return "#/";
+function pageToPath(page) {
+  if (page.name === "category") return "/category/" + encodeURIComponent(page.category || "");
+  if (page.name === "article") return "/article/" + encodeURIComponent(page.slug || page.id || "");
+  if (page.name === "opinion") return "/opinion";
+  if (page.name === "about") return "/about";
+  if (page.name === "privacy") return "/privacy";
+  if (page.name === "contact") return "/contact";
+  if (page.name === "admin") return "/admin";
+  return "/";
 }
 
-function hashToPage(hash) {
-  const h = (hash || "").replace(/^#\/?/, "");
-  const parts = h.split("/").filter(Boolean).map(function (s) { try { return decodeURIComponent(s); } catch (e) { return s; } });
+function hrefFor(name, params) { return pageToPath(Object.assign({ name: name }, params || {})); }
+
+function pathToPage(pathname) {
+  const parts = (pathname || "/").split("/").filter(Boolean).map(function (s) { try { return decodeURIComponent(s); } catch (e) { return s; } });
   if (parts.length === 0) return { name: "home" };
   if (parts[0] === "category" && parts[1]) return { name: "category", category: parts[1] };
-  if (parts[0] === "article" && parts[1]) return { name: "article", id: parts[1] };
+  if (parts[0] === "article" && parts[1]) return { name: "article", slug: parts[1] };
   if (parts[0] === "opinion") return { name: "opinion" };
   if (parts[0] === "about") return { name: "about" };
   if (parts[0] === "privacy") return { name: "privacy" };
@@ -232,27 +234,29 @@ function goto(name, params) {
   S.menuOpen = false;
   S.searchOpen = false;
   S.query = "";
-  const hash = pageToHash(S.page);
-  if (window.location.hash !== hash) {
-    history.pushState({ vantagePage: S.page }, "", hash);
+  const path = pageToPath(S.page);
+  if (window.location.pathname !== path) {
+    history.pushState({ vantagePage: S.page }, "", path);
   }
   render();
   window.scrollTo({ top: 0, behavior: "auto" });
-  if (name === "article" && params && params.id && !S.comments[params.id]) {
-    loadCommentsFor(params.id);
+  if (name === "article" && params && params.slug) {
+    const found = S.articles.find(a => a.slug === params.slug);
+    if (found && !S.comments[found.id]) loadCommentsFor(found.id);
   }
 }
 
 window.addEventListener("popstate", function (e) {
-  const page = (e.state && e.state.vantagePage) || hashToPage(window.location.hash);
+  const page = (e.state && e.state.vantagePage) || pathToPage(window.location.pathname);
   S.page = page;
   S.menuOpen = false;
   S.searchOpen = false;
   S.query = "";
   render();
   window.scrollTo({ top: 0, behavior: "auto" });
-  if (page.name === "article" && page.id && !S.comments[page.id]) {
-    loadCommentsFor(page.id);
+  if (page.name === "article" && page.slug) {
+    const found = S.articles.find(a => a.slug === page.slug);
+    if (found && !S.comments[found.id]) loadCommentsFor(found.id);
   }
 });
 
@@ -318,23 +322,23 @@ function categoryTag(category) {
 function articleCard(a, variant) {
   if (variant === "row") {
     return `
-      <button class="card-row" data-goto="article" data-params='{"id":"${a.id}"}'>
+      <a class="card-row" href="${esc(hrefFor("article", { slug: a.slug }))}" data-goto="article" data-params='{"slug":"${a.slug}"}'>
         <img src="${esc(a.image)}" alt="" loading="lazy">
         <div class="card-row-body">
           ${categoryTag(a.category)}
           <h3>${esc(a.title)}</h3>
           <span class="meta-mono">${a.dateline ? esc(a.dateline) + " &middot; " : ""}${esc(timeAgo(a.date))}</span>
         </div>
-      </button>`;
+      </a>`;
   }
   return `
-    <button class="card" data-goto="article" data-params='{"id":"${a.id}"}'>
+    <a class="card" href="${esc(hrefFor("article", { slug: a.slug }))}" data-goto="article" data-params='{"slug":"${a.slug}"}'>
       <div class="card-img"><img src="${esc(a.image)}" alt="" loading="lazy"></div>
       ${categoryTag(a.category)}
       <h3>${esc(a.title)}</h3>
       <p class="card-dek">${esc(a.dek)}</p>
       <div class="card-dateline">${dateline(a)}</div>
-    </button>`;
+    </a>`;
 }
 
 function parseInlineMd(text) {
@@ -466,7 +470,7 @@ const NAV_ITEMS = [
 ];
 
 function navButton(item, mobile) {
-  return `<button class="${mobile ? "nav-item-mobile" : "nav-item"}" data-goto="${item.name}" data-params='${JSON.stringify(item.params)}'>${esc(item.label)}</button>`;
+  return `<a class="${mobile ? "nav-item-mobile" : "nav-item"}" href="${esc(hrefFor(item.name, item.params))}" data-goto="${item.name}" data-params='${JSON.stringify(item.params)}'>${esc(item.label)}</a>`;
 }
 
 function renderMasthead() {
@@ -485,11 +489,11 @@ function renderMasthead() {
         <button class="icon-btn menu-btn" data-toggle="menu" aria-label="Menu">
           <i data-lucide="${S.menuOpen ? "x" : "menu"}"></i>
         </button>
-        <button class="brand" data-goto="home">
+        <a class="brand" href="/" data-goto="home">
           <span class="brand-wordmark">${esc(S.settings.brandName)}</span>
           <span class="brand-subtitle">News Network</span>
           <span class="brand-tagline">${esc(S.settings.tagline)}</span>
-        </button>
+        </a>
         <div class="masthead-actions">
           <button class="icon-btn" data-toggle="search" aria-label="Search"><i data-lucide="search"></i></button>
           <button class="icon-btn" data-toggle="dark" aria-label="Toggle dark mode"><i data-lucide="${S.dark ? "sun" : "moon"}"></i></button>
@@ -518,7 +522,7 @@ function renderTicker() {
         <div class="ticker-label"><i data-lucide="radio"></i> Breaking</div>
         <div class="ticker-scroll">
           <div class="ticker-track">
-            ${doubled.map(a => `<button class="ticker-item" data-goto="article" data-params='{"id":"${a.id}"}'>${esc(a.title)}</button>`).join("")}
+            ${doubled.map(a => `<a class="ticker-item" href="${esc(hrefFor("article", { slug: a.slug }))}" data-goto="article" data-params='{"slug":"${a.slug}"}'>${esc(a.title)}</a>`).join("")}
           </div>
         </div>
       </div>
@@ -534,7 +538,7 @@ function sectionHeader(title, sub, seeAllName, seeAllParams) {
         <h2>${esc(title)}</h2>
         ${sub ? `<p class="section-sub">${esc(sub)}</p>` : ""}
       </div>
-      ${seeAllName ? `<button class="see-all" data-goto="${seeAllName}" data-params='${JSON.stringify(seeAllParams || {})}'>See all <i data-lucide="chevron-right"></i></button>` : ""}
+      ${seeAllName ? `<a class="see-all" href="${esc(hrefFor(seeAllName, seeAllParams || {}))}" data-goto="${seeAllName}" data-params='${JSON.stringify(seeAllParams || {})}'>See all <i data-lucide="chevron-right"></i></a>` : ""}
     </div>`;
 }
 
@@ -562,21 +566,21 @@ function renderHome() {
   return `
     <div class="wrap">
       <section class="hero-section">
-        <button class="hero-main" data-goto="article" data-params='{"id":"${hero.id}"}'>
+        <a class="hero-main" href="${esc(hrefFor("article", { slug: hero.slug }))}" data-goto="article" data-params='{"slug":"${hero.slug}"}'>
           <div class="hero-img"><img src="${esc(hero.image)}" alt=""></div>
           ${tagActive(hero, "breaking") ? `<span class="badge-breaking">Breaking</span>` : ""}
           ${categoryTag(hero.category)}
           <h1>${esc(hero.title)}</h1>
           <p class="hero-dek">${esc(hero.dek)}</p>
           <div class="hero-dateline">${dateline(hero, "md")}</div>
-        </button>
+        </a>
         <div class="hero-side">
           <span class="hero-side-label">Also in this edition</span>
           ${secondary.map(a => `
-            <button class="hero-side-item" data-goto="article" data-params='{"id":"${a.id}"}'>
+            <a class="hero-side-item" href="${esc(hrefFor("article", { slug: a.slug }))}" data-goto="article" data-params='{"slug":"${a.slug}"}'>
               <img src="${esc(a.image)}" alt="">
               <div>${categoryTag(a.category)}<h3>${esc(a.title)}</h3></div>
-            </button>`).join("")}
+            </a>`).join("")}
         </div>
       </section>
 
@@ -589,10 +593,10 @@ function renderHome() {
           ${sectionHeader("Trending")}
           <div class="trending-list">
             ${trending.map((a, i) => `
-              <button class="trending-item" data-goto="article" data-params='{"id":"${a.id}"}'>
+              <a class="trending-item" href="${esc(hrefFor("article", { slug: a.slug }))}" data-goto="article" data-params='{"slug":"${a.slug}"}'>
                 <span class="trending-num">${String(i + 1).padStart(2, "0")}</span>
                 <div><h3>${esc(a.title)}</h3><span class="meta-mono">${a.dateline ? esc(a.dateline) + " &middot; " : ""}${esc(timeAgo(a.date))}</span></div>
-              </button>`).join("")}
+              </a>`).join("")}
           </div>
         </div>
       </section>
@@ -623,15 +627,15 @@ function renderHome() {
       <div class="wrap">
         <div class="beyond-header">
           <div><span class="eyebrow">The Deeper Read</span><h2>Beyond the Headlines</h2></div>
-          <button class="see-all" data-goto="category" data-params='{"category":"beyond"}'>See all <i data-lucide="chevron-right"></i></button>
+          <a class="see-all" href="${esc(hrefFor("category", { category: "beyond" }))}" data-goto="category" data-params='{"category":"beyond"}'>See all <i data-lucide="chevron-right"></i></a>
         </div>
         <div class="beyond-grid">
           ${beyond.map(a => `
-            <button class="beyond-item" data-goto="article" data-params='{"id":"${a.id}"}'>
+            <a class="beyond-item" href="${esc(hrefFor("article", { slug: a.slug }))}" data-goto="article" data-params='{"slug":"${a.slug}"}'>
               <span class="eyebrow">${esc(categoryLabel(a.category))}</span>
               <h3>${esc(a.title)}</h3>
               <p>${esc(a.dek)}</p>
-            </button>`).join("")}
+            </a>`).join("")}
         </div>
       </div>
     </section>`;
@@ -684,13 +688,13 @@ function renderSearchResults() {
 
 /* --------------------------------- Article page --------------------------------- */
 
-function renderArticlePage(id) {
-  const article = S.articles.find(a => a.id === id);
+function renderArticlePage(slug) {
+  const article = S.articles.find(a => a.slug === slug);
   if (!article) {
     return `
       <div class="wrap page-tight center-text">
         <p class="not-found">This story couldn't be found — it may have been removed.</p>
-        <button class="see-all" data-goto="home">Return to homepage</button>
+        <a class="see-all" href="/" data-goto="home">Return to homepage</a>
       </div>`;
   }
 
@@ -701,7 +705,7 @@ function renderArticlePage(id) {
 
   return `
     <article class="wrap page-tight">
-      <button class="eyebrow-btn" data-goto="category" data-params='{"category":"${article.category}"}'>${esc(categoryLabel(article.category))}</button>
+      <a class="eyebrow-btn" href="${esc(hrefFor("category", { category: article.category }))}" data-goto="category" data-params='{"category":"${article.category}"}'>${esc(categoryLabel(article.category))}</a>
       ${tagActive(article, "breaking") ? `<span class="badge-breaking inline-badge">Breaking</span>` : ""}
       <h1 class="article-title">${esc(article.title)}</h1>
       <p class="article-dek">${esc(article.dek)}</p>
@@ -897,15 +901,15 @@ function renderFooter() {
         </div>
         <div>
           <h4>Sections</h4>
-          <ul>${CATEGORIES.map(c => `<li><button data-goto="category" data-params='{"category":"${c.id}"}'>${esc(c.label)}</button></li>`).join("")}</ul>
+          <ul>${CATEGORIES.map(c => `<li><a href="${esc(hrefFor("category", { category: c.id }))}" data-goto="category" data-params='{"category":"${c.id}"}'>${esc(c.label)}</a></li>`).join("")}</ul>
         </div>
         <div>
           <h4>About</h4>
           <ul>
-            <li><button data-goto="about">About us</button></li>
-            <li><button data-goto="contact">Contact</button></li>
-            <li><button data-goto="opinion">Opinion</button></li>
-            <li><button data-goto="privacy">Privacy Policy</button></li>
+            <li><a href="/about" data-goto="about">About us</a></li>
+            <li><a href="/contact" data-goto="contact">Contact</a></li>
+            <li><a href="/opinion" data-goto="opinion">Opinion</a></li>
+            <li><a href="/privacy" data-goto="privacy">Privacy Policy</a></li>
           </ul>
         </div>
       </div>
@@ -1247,7 +1251,7 @@ function renderMain() {
   if (S.query.trim()) return renderSearchResults();
   const p = S.page;
   if (p.name === "home") return renderHome();
-  if (p.name === "article") return renderArticlePage(p.id);
+  if (p.name === "article") return renderArticlePage(p.slug);
   if (p.name === "opinion") return renderOpinionPage();
   if (p.name === "category") return renderCategoryPage(p.category);
   if (p.name === "about") return renderAboutPage();
@@ -1260,7 +1264,31 @@ function renderMain() {
   return "";
 }
 
+function updateDocumentTitle() {
+  const brand = (S.settings && S.settings.brandName) || BRAND;
+  const p = S.page;
+  let title = brand;
+  if (p.name === "article") {
+    const article = S.articles.find(a => a.slug === p.slug);
+    if (article) title = article.title + " — " + brand;
+  } else if (p.name === "category") {
+    title = categoryLabel(p.category) + " — " + brand;
+  } else if (p.name === "opinion") {
+    title = "Opinion — " + brand;
+  } else if (p.name === "about") {
+    title = "About — " + brand;
+  } else if (p.name === "privacy") {
+    title = "Privacy Policy — " + brand;
+  } else if (p.name === "contact") {
+    title = "Contact — " + brand;
+  } else if (p.name === "home") {
+    title = brand + " — " + ((S.settings && S.settings.tagline) || TAGLINE);
+  }
+  document.title = title;
+}
+
 function render() {
+  updateDocumentTitle();
   const app = document.getElementById("app");
 
   if (S.ready === "unconfigured") {
@@ -1309,6 +1337,8 @@ function render() {
 document.addEventListener("click", async function (e) {
   const gotoBtn = e.target.closest("[data-goto]");
   if (gotoBtn) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
     const name = gotoBtn.getAttribute("data-goto");
     const paramsAttr = gotoBtn.getAttribute("data-params");
     let params = {};
@@ -1580,7 +1610,8 @@ document.addEventListener("submit", async function (e) {
     };
     if (!editingId) {
       const newArticle = Object.assign({ id: uid(), date: new Date().toISOString() }, data);
-      await insertArticle(newArticle);
+      const newSlug = await insertArticle(newArticle);
+      newArticle.slug = newSlug || newArticle.id;
       S.articles = [newArticle].concat(S.articles);
     } else {
       await updateArticleRow(editingId, data);
