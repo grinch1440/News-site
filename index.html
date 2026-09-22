@@ -11,9 +11,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="style.css">
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1250932592374683"
-     crossorigin="anonymous"></script>
-  <meta name="google-site-verification" content="dngCyM4iuOUSzeDW1sDj4dAsjbPsjc2VSuF-rRsTEvU" />
 </head>
 <body>
 
@@ -24,10 +21,11 @@
     function showFatal(msg) {
       var app = document.getElementById("app");
       if (app && app.getAttribute("data-vantage-loaded") !== "1") {
-        console.error("VANTAGE load error:", msg);
+        console.error("Bashline load error:", msg);
         app.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;box-sizing:border-box;background:#F7F4EC;font-family:sans-serif;text-align:center;">' +
-          '<div><h2 style="font-family:Georgia,serif;color:#10192B;margin:0 0 0.6rem;">VANTAGE is having trouble loading</h2>' +
+          '<div><h2 style="font-family:Georgia,serif;color:#10192B;margin:0 0 0.6rem;">Bashline is having trouble loading</h2>' +
           '<p style="color:#5B6472;margin:0 0 1.2rem;">Please check your connection and try again.</p>' +
+          '<p style="color:#B23A3A;font-family:monospace;font-size:0.8rem;margin:0 0 1.2rem;word-break:break-word;">' + (msg || "") + '</p>' +
           '<button onclick="location.reload()" style="background:#10192B;color:#F7F4EC;border:none;padding:0.65rem 1.5rem;border-radius:4px;font-size:0.9rem;cursor:pointer;">Reload</button></div></div>';
       }
     }
