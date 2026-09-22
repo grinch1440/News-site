@@ -108,4 +108,3 @@ ${image ? `<meta name="twitter:image" content="${escapeHtml(image)}">` : ""}
 </body>
 </html>`);
 };
-    
