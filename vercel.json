@@ -1,19 +1,9 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "api/article.js", "use": "@vercel/node" },
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "admin.html", "use": "@vercel/static" },
-    { "src": "app.js", "use": "@vercel/static" },
-    { "src": "data.js", "use": "@vercel/static" },
-    { "src": "config.js", "use": "@vercel/static" },
-    { "src": "style.css", "use": "@vercel/static" },
-    { "src": "bashline-logo.png", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/article/(.*)", "dest": "/api/article?slug=$1" },
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "functions": {
+    "api/article.js": {}
+  },
+  "rewrites": [
+    { "source": "/article/:slug", "destination": "/api/article?slug=:slug" },
+    { "source": "/((?!api/|.*\\..*).*)", "destination": "/index.html" }
   ]
 }
