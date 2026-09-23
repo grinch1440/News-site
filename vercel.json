@@ -1,7 +1,4 @@
 {
-  "functions": {
-    "api/article.js": {}
-  },
   "rewrites": [
     { "source": "/article/:slug", "destination": "/api/article?slug=:slug" },
     { "source": "/((?!api/|.*\\..*).*)", "destination": "/index.html" }
