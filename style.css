@@ -418,6 +418,12 @@ html.dark .ticker-wrap { background: var(--paper-alt); }
 .article-img { border-radius: 6px; overflow: hidden; margin-bottom: 1.75rem; }
 .article-body p { font-family: var(--font-serif); font-size: 1.1rem; line-height: 1.75; margin: 0 0 1.25rem; color: var(--ink); }
 .article-body h3 { font-family: var(--font-serif); font-size: 1.3rem; margin: 1.75rem 0 0.85rem; }
+.article-body p a, .article-body .body-list a {
+  color: var(--signal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.article-body p a:hover, .article-body .body-list a:hover { opacity: 0.8; }
 .article-body .body-list { margin: 0 0 1.25rem; padding-left: 1.4rem; }
 .article-body .body-list li { font-family: var(--font-serif); font-size: 1.1rem; line-height: 1.6; margin-bottom: 0.5rem; }
 .article-body p.drop-cap::first-letter {

@@ -345,6 +345,12 @@ function parseInlineMd(text) {
   let out = esc(text);
   out = out.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   out = out.replace(/(^|[^*])\*([^*]+?)\*(?!\*)/g, "$1<em>$2</em>");
+  out = out.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
+    let trail = "";
+    const trailMatch = url.match(/[.,!?:;'")\]]+$/);
+    if (trailMatch) { trail = trailMatch[0]; url = url.slice(0, url.length - trail.length); }
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>${trail}`;
+  });
   return out;
 }
 
@@ -359,7 +365,8 @@ function renderBodyBlock(block, isFirst) {
     return `<ul class="body-list">${lines.map(l => `<li>${parseInlineMd(l.replace(/^[-*]\s+/, ""))}</li>`).join("")}</ul>`;
   }
   const html = lines.map(l => parseInlineMd(l)).join("<br>");
-  return `<p${isFirst ? ' class="drop-cap"' : ""}>${html}</p>`;
+  const startsWithLink = /^https?:\/\//i.test(lines[0] || "");
+  return `<p${isFirst && !startsWithLink ? ' class="drop-cap"' : ""}>${html}</p>`;
 }
 
 function emptyState(text) {
@@ -458,6 +465,7 @@ const NAV_ITEMS = [
   { label: "Health", name: "category", params: { category: "health" } },
   { label: "Opinion", name: "opinion", params: {} },
   { label: "Analysis", name: "category", params: { category: "analysis" } },
+  { label: "Explainer", name: "category", params: { category: "explainer" } },
   { label: "Beyond the Headlines", name: "category", params: { category: "beyond" } },
   { label: "Africa", name: "category", params: { category: "africa" } },
   { label: "Americas", name: "category", params: { category: "americas" } },
@@ -1081,6 +1089,7 @@ function renderArticleEditor(article) {
             <option value="news" ${f.type === "news" ? "selected" : ""}>News</option>
             <option value="opinion" ${f.type === "opinion" ? "selected" : ""}>Opinion</option>
             <option value="analysis" ${f.type === "analysis" ? "selected" : ""}>Analysis</option>
+            <option value="explainer" ${f.type === "explainer" ? "selected" : ""}>Explainer</option>
           </select>
         </div>
       </div>

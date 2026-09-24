@@ -12,6 +12,7 @@ const CATEGORIES = [
   { id: "health", label: "Health" },
   { id: "opinion", label: "Opinion" },
   { id: "analysis", label: "Analysis" },
+  { id: "explainer", label: "Explainer" },
   { id: "beyond", label: "Beyond the Headlines" },
   { id: "africa", label: "Africa" },
   { id: "americas", label: "Americas" },
