@@ -10,8 +10,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_Jbq6Ix2C9YdiwNA4yP_uRw_mO6-MKND";
 // its own dedicated /opinion page rather than living under /category/).
 const CATEGORY_IDS = [
   "world", "politics", "entertainment", "business", "sports", "technology",
-  "health", "analysis", "beyond", "africa", "americas", "asia", "europe",
-  "middle-east", "oceania",
+  "health", "analysis", "explainer", "beyond", "africa", "americas", "asia",
+  "europe", "middle-east", "oceania",
 ];
 
 function escapeXml(s) {
