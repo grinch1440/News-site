@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+
+Sitemap: https://news-site-liart-six.vercel.app/sitemap.xml
