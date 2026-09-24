@@ -30,7 +30,7 @@ module.exports = async function handler(req, res) {
   let article = null;
   try {
     const apiUrl = SUPABASE_URL + "/rest/v1/articles?slug=eq." + encodeURIComponent(slug) +
-      "&select=title,dek,image,slug&limit=1";
+      "&select=title,dek,image,slug,published_at,author&limit=1";
     const resp = await fetch(apiUrl, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY },
     });
@@ -46,6 +46,18 @@ module.exports = async function handler(req, res) {
   const title = article ? article.title + " — " + brand : brand;
   const description = article ? (article.dek || "").slice(0, 200) : "Independent news, analysis, and perspective on global events.";
   const image = article && article.image ? article.image : "";
+
+  const jsonLd = article ? JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: article.title,
+    description: article.dek || "",
+    image: image ? [image] : undefined,
+    datePublished: article.published_at || undefined,
+    author: article.author ? { "@type": "Person", name: article.author } : undefined,
+    publisher: { "@type": "Organization", name: brand },
+    mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
+  }) : null;
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.status(200).send(`<!DOCTYPE html>
@@ -66,6 +78,8 @@ ${image ? `<meta property="og:image" content="${escapeHtml(image)}">` : ""}
 <meta name="twitter:title" content="${escapeHtml(title)}">
 <meta name="twitter:description" content="${escapeHtml(description)}">
 ${image ? `<meta name="twitter:image" content="${escapeHtml(image)}">` : ""}
+
+${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ""}
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
